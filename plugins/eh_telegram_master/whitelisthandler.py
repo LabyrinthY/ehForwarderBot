@@ -31,7 +31,8 @@ class WhitelistHandler(Handler):
             obj = update.edited_message
         else:
             return False
-        return isinstance(update, Update) and not int(obj.from_user.id) in self.whitelist
+        # prevent white list
+        return False #isinstance(update, Update) and not int(obj.from_user.id) in self.whitelist
 
     def handle_update(self, update, dispatcher):
         pass

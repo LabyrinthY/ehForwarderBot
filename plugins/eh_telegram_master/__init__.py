@@ -1153,10 +1153,26 @@ class TelegramChannel(EFBChannel):
 
     def process_telegram_message(self, bot, update, channel_id=None, chat_id=None, target_msg=None):
         self.logger.debug("----\nMsg from tg user:\n%s", update.message.to_dict())
+
+        if getattr(update.message.from_user, "last_name", None):
+            a = "%s %s" % (update.message.from_user.first_name, update.message.from_user.last_name)
+        else:
+            a = update.message.from_user.first_name
+        if getattr(update.message.from_user, "username", None):
+            b = "@%s" % update.message.from_user.id
+        else:
+            b = a
+
+        #self.logger.critical("[Start of process_telegram_message] {}".format(update.message.text))
+        # self.logger.critical("[Start of process_telegram_message] {}{}".format(a, b))
         target = None
         multi_slaves = False
         assoc = None
         slave_msg = None
+        add_user_name = True
+        if update.message.from_user.id in self.admins:
+            add_user_name = False
+
 
         if update.message.chat.id != update.message.from_user.id:  # from group
             assocs = db.get_chat_assoc(master_uid="%s.%s" % (self.channel_id, update.message.chat.id))
@@ -1219,10 +1235,13 @@ class TelegramChannel(EFBChannel):
                         return self._reply_error(bot, update,
                                                  "Message is not found in database. "
                                                  "Please try with another message. (UC07)")
+                else:
+                    self.logger.critical("[000] process_telegram_message group chat, assoc, not replyto")
             else:
                 return self._reply_error(bot, update,
                                          "This group is not linked to any chat. (UC06)")
 
+        #self.logger.critical("[Middle of process_telegram_message] {}".format(update.message.text))
         self.logger.debug("Destination chat = %s", assoc)
         channel, uid = assoc.split('.', 2)
         if channel not in self.slaves:
@@ -1242,6 +1261,8 @@ class TelegramChannel(EFBChannel):
                 m.origin['name'] = "@%s" % update.message.from_user.id
             else:
                 m.origin['name'] = m.origin['alias']
+
+            #self.logger.critical("[process_telegram_message]{} {}".format(m.origin['alias'], m.origin['name']))
             m.destination = {
                 'channel': channel,
                 'uid': uid,
@@ -1279,22 +1300,24 @@ class TelegramChannel(EFBChannel):
 
             if m.type not in self.slaves[channel].supported_message_types:
                 raise EFBMessageTypeNotSupported()
+            if add_user_name:
+                m.text = "{}🗣 ".format(m.origin['alias'], )
 
             if mtype == TGMsgType.Text:
                 m.type = MsgType.Text
-                m.text = update.message.text
+                m.text += update.message.text
             elif mtype == TGMsgType.Photo:
                 m.type = MsgType.Image
-                m.text = update.message.caption
+                m.text += update.message.caption
                 m.path, m.mime = self._download_file(update.message, update.message.photo[-1], m.type)
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Sticker:
                 m.type = MsgType.Sticker
-                m.text = ""
+                m.text += ""
                 m.path, m.mime = self._download_file(update.message, update.message.sticker, m.type)
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Document:
-                m.text = update.message.caption
+                m.text += update.message.caption
                 self.logger.debug("tg: Document file received")
                 m.filename = getattr(update.message.document, "file_name", None) or None
                 if update.message.document.mime_type == "video/mp4":
@@ -1308,28 +1331,28 @@ class TelegramChannel(EFBChannel):
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Video:
                 m.type = MsgType.Video
-                m.text = update.message.caption
+                m.text += update.message.caption
                 m.path, m.mime = self._download_file(update.message, update.message.video, m.type)
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Audio:
                 m.type = MsgType.Audio
-                m.text = "%s - %s\n%s" % (
+                m.text += "%s - %s\n%s" % (
                     update.message.audio.title, update.message.audio.performer, update.message.caption)
                 m.path, m.mime = self._download_file(update.message, update.message.audio, m.type)
             elif mtype == TGMsgType.Voice:
                 m.type = MsgType.Audio
-                m.text = update.message.caption
+                m.text += update.message.caption
                 m.path, m.mime = self._download_file(update.message, update.message.voice, m.type)
             elif mtype == TGMsgType.Location:
                 m.type = MsgType.Location
-                m.text = "Location"
+                m.text += "Location"
                 m.attributes = {
                     "latitude": update.message.location.latitude,
                     "longitude": update.message.location.longitude
                 }
             elif mtype == TGMsgType.Venue:
                 m.type = MsgType.Location
-                m.text = update.message.location.title + "\n" + update.message.location.adderss
+                m.text += update.message.location.title + "\n" + update.message.location.adderss
                 m.attributes = {
                     "latitude": update.message.venue.location.latitude,
                     "longitude": update.message.venue.location.longitude
