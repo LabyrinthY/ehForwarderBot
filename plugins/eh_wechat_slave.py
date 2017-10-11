@@ -385,7 +385,7 @@ class WeChatChannel(EFBChannel):
         self.logger.debug("%s (%s) gracefully stopped.", self.channel_name, self.channel_id)
 
     def itchat_msg_register(self):
-        self.itchat.msg_register(['Text'], isFriendChat=True, isMpChat=True, isGroupChat=True)(self.wechat_text_msg)
+        self.itchat.msg_register(['Text'], isFriendChat=True, isMpChat=False, isGroupChat=True)(self.wechat_text_msg)
         self.itchat.msg_register(['Sharing'], isFriendChat=True, isMpChat=True, isGroupChat=True)(self.wechat_link_msg)
         self.itchat.msg_register(['Picture'], isFriendChat=True, isMpChat=True, isGroupChat=True)(self.wechat_picture_msg)
         self.itchat.msg_register(['Attachment'], isFriendChat=True, isMpChat=True, isGroupChat=True)(self.wechat_file_msg)
@@ -861,10 +861,12 @@ class WeChatChannel(EFBChannel):
     def get_chats(self):
         group = True
         user = True
+        offical_account = True
         refresh = self._flag("refresh_friends", False)
         r = []
         if user:
-            t = self.itchat.get_friends(refresh) + self.itchat.get_mps(refresh)
+            t = self.itchat.get_friends(refresh)
+            #    t += self.itchat.get_mps(refresh)
             t = [dict()] + t
             t[0]['NickName'] = "File Helper"
             t[0]['UserName'] = "filehelper"
@@ -883,6 +885,20 @@ class WeChatChannel(EFBChannel):
                                         alias=self._wechat_html_unescape(i.get("RemarkName", None)),
                                         Uin=i.get("Uin", None)),
                     'type': MsgSource.User
+                })
+        if offical_account:
+            t = self.itchat.get_mps(refresh)
+            for i in t:
+                r.append({
+                    'channel_name': self.channel_name,
+                    'channel_id': self.channel_id,
+                    'name': self._wechat_html_unescape(i['NickName']),
+                    'alias': self._wechat_html_unescape(i['RemarkName'] or i['NickName']),
+                    'uid': self.get_uid(UserName=i['UserName'],
+                                        NickName=self._wechat_html_unescape(i['NickName']),
+                                        alias=self._wechat_html_unescape(i.get("RemarkName", None)),
+                                        Uin=i.get("Uin", None)),
+                    'type': MsgSource.OfficalAccount
                 })
         if group:
             t = self.itchat.get_chatrooms(refresh)

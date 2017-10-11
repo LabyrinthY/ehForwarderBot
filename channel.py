@@ -18,6 +18,7 @@ class MsgType:
 class MsgSource:
     User = "User"
     Group = "Group"
+    OfficalAccount = "MP"
     System = "System"
 
 
@@ -107,7 +108,7 @@ class EFBChannel:
 
         Returns:
             dict: the standard chat dict of the chat.
-        
+
         Raises:
             KeyError: Chat is not found in the channel.
         """

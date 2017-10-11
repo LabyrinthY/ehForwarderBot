@@ -1,6 +1,7 @@
 class Emojis:
     GROUP_EMOJI = "👥"
     USER_EMOJI = "👤"
+    OFFICAL_ACCOUNT_EMOJI = "👀"
     SYSTEM_EMOJI = "💻"
     UNKNOWN_EMOJI = "❓"
     LINK_EMOJI = "🔗"
@@ -13,6 +14,8 @@ class Emojis:
             return Emojis.GROUP_EMOJI
         elif t == "System":
             return Emojis.SYSTEM_EMOJI
+        elif t == "MP":
+            return Emojis.OFFICAL_ACCOUNT_EMOJI
         else:
             return Emojis.UNKNOWN_EMOJI
 
