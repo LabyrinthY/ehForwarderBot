@@ -1308,7 +1308,8 @@ class TelegramChannel(EFBChannel):
                 m.text += update.message.text
             elif mtype == TGMsgType.Photo:
                 m.type = MsgType.Image
-                m.text += update.message.caption
+                if update.message.caption:
+                    m.text += update.message.caption
                 m.path, m.mime = self._download_file(update.message, update.message.photo[-1], m.type)
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Sticker:
@@ -1317,7 +1318,8 @@ class TelegramChannel(EFBChannel):
                 m.path, m.mime = self._download_file(update.message, update.message.sticker, m.type)
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Document:
-                m.text += update.message.caption
+                if update.message.caption:
+                    m.text += update.message.caption
                 self.logger.debug("tg: Document file received")
                 m.filename = getattr(update.message.document, "file_name", None) or None
                 if update.message.document.mime_type == "video/mp4":
@@ -1331,7 +1333,8 @@ class TelegramChannel(EFBChannel):
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Video:
                 m.type = MsgType.Video
-                m.text += update.message.caption
+                if update.message.caption:
+                    m.text += update.message.caption
                 m.path, m.mime = self._download_file(update.message, update.message.video, m.type)
                 m.file = open(m.path, "rb")
             elif mtype == TGMsgType.Audio:
@@ -1341,7 +1344,8 @@ class TelegramChannel(EFBChannel):
                 m.path, m.mime = self._download_file(update.message, update.message.audio, m.type)
             elif mtype == TGMsgType.Voice:
                 m.type = MsgType.Audio
-                m.text += update.message.caption
+                if update.message.caption:
+                    m.text += update.message.caption
                 m.path, m.mime = self._download_file(update.message, update.message.voice, m.type)
             elif mtype == TGMsgType.Location:
                 m.type = MsgType.Location
